@@ -1,11 +1,12 @@
 package main
 
 import (
+	"log"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"gorm.io/gorm"
-	"log"
-	"time"
 )
 
 var (
@@ -33,11 +34,11 @@ func main() {
 
 	router := gin.Default()
 	router.POST("/login", Login)
+	router.GET("/status", status)
 	authorized := router.Group("/")
 	authorized.Use(authenticate())
 	{
-		authorized.GET("/status", status)
-		authorized.GET("/protected", Protected)
+		authorized.GET("/protected", validate)
 	}
 	if err := router.Run(":8080"); err != nil {
 		log.Fatal("Error while running the server:", err)
