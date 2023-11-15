@@ -1,9 +1,11 @@
 package main
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 func authenticate() gin.HandlerFunc {
@@ -15,7 +17,7 @@ func authenticate() gin.HandlerFunc {
 			return jwtKey, nil
 		})
 		if err != nil || !tkn.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized", "code": "401", "timestamp": time.Now()})
 			c.Abort()
 			return
 		}
