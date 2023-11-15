@@ -43,11 +43,14 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": tokenString})
 }
 
-// Protected route handler
 func Protected(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"content": "This view is protected. Only authorized clients can access it."})
 }
 
-func status() {
+func status(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"status": "ok", "Server started at": serverStartTime})
+}
 
+func validate(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }

@@ -5,10 +5,12 @@ import (
 	"github.com/golang-jwt/jwt"
 	"gorm.io/gorm"
 	"log"
+	"time"
 )
 
 var (
-	jwtKey = []byte("llave-super-secreta")
+	jwtKey          = []byte("llave-super-secreta")
+	serverStartTime time.Time
 )
 
 type Credentials struct {
@@ -23,6 +25,7 @@ type Claims struct {
 }
 
 func main() {
+	serverStartTime = time.Now()
 	DBConnection()
 
 	DB.AutoMigrate(&Credentials{})
@@ -33,6 +36,7 @@ func main() {
 	authorized := router.Group("/")
 	authorized.Use(authenticate())
 	{
+		authorized.GET("/status", status)
 		authorized.GET("/protected", Protected)
 	}
 	if err := router.Run(":8080"); err != nil {
