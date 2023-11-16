@@ -1,7 +1,9 @@
 package main
 
 import (
+	"html/template"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -40,9 +42,19 @@ func main() {
 	{
 		authorized.GET("/protected", validate)
 	}
-	if err := router.Run(":8080"); err != nil {
-		log.Fatal("Error while running the server:", err)
+
+	go func() {
+		if err := router.Run(":8080"); err != nil {
+			log.Fatal("Error while running the server:", err)
+		}
+	}()
+
+	h1 := func(w http.ResponseWriter, r *http.Request) {
+		tmpl := template.Must(template.ParseFiles("index.html"))
+		tmpl.Execute(w, nil)
 	}
+	http.HandleFunc("/html", h1)
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
 func createDemoUsersIfEmpty() {
