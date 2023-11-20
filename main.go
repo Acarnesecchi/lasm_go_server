@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -28,6 +29,9 @@ type Claims struct {
 }
 
 func main() {
+
+	go startWebServer()
+
 	serverStartTime = time.Now()
 	DBConnection()
 
@@ -42,19 +46,10 @@ func main() {
 	{
 		authorized.GET("/protected", validate)
 	}
-
-	go func() {
-		if err := router.Run(":8080"); err != nil {
-			log.Fatal("Error while running the server:", err)
-		}
-	}()
-
-	h1 := func(w http.ResponseWriter, r *http.Request) {
-		tmpl := template.Must(template.ParseFiles("index.html"))
-		tmpl.Execute(w, nil)
+	if err := router.Run(":8080"); err != nil {
+		log.Fatal("Error while running the server:", err)
 	}
-	http.HandleFunc("/html", h1)
-	log.Fatal(http.ListenAndServe(":8000", nil))
+
 }
 
 func createDemoUsersIfEmpty() {
@@ -69,4 +64,16 @@ func createDemoUsersIfEmpty() {
 			DB.Create(&user)
 		}
 	}
+}
+
+func startWebServer() {
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	h1 := func(w http.ResponseWriter, r *http.Request) {
+		tmpl := template.Must(template.ParseFiles("index.html"))
+		tmpl.Execute(w, nil)
+	}
+	http.HandleFunc("/html", h1)
+	fmt.Println("Starting WebServer on localhost:8000")
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }
