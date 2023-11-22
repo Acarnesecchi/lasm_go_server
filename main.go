@@ -1,27 +1,20 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
-	"gorm.io/gorm"
 )
 
 var (
 	jwtKey          = []byte("llave-super-secreta")
 	serverStartTime time.Time
 )
-
-type Credentials struct {
-	gorm.Model
-	Username string `gorm:"primaryKey" json:"username"`
-	Password string `gorm:"not null" json:"password"`
-}
 
 type Claims struct {
 	Username string `json:"username"`
@@ -35,20 +28,40 @@ func main() {
 	serverStartTime = time.Now()
 	DBConnection()
 
-	DB.AutoMigrate(&Credentials{})
+	err := DB.AutoMigrate(&Credentials{}, &Scooter{}, &Rent{})
+	if err != nil {
+		e := DB.Migrator().DropTable(&Credentials{}, &Scooter{}, &Rent{})
+		if e != nil {
+			log.Fatal("Error while dropping the database:", e)
+		}
+		log.Fatal("Error while migrating the database:", err)
+	}
 	createDemoUsersIfEmpty()
 
-	router := gin.Default()
-	router.POST("/login", Login)
-	router.GET("/status", status)
-	authorized := router.Group("/")
-	authorized.Use(authenticate())
-	{
-		authorized.GET("/protected", validate)
+	var rents []Rent
+	result := DB.Find(&rents)
+	if result.Error != nil {
+		log.Fatal("Error while fetching the database:", result.Error)
 	}
-	if err := router.Run(":8080"); err != nil {
-		log.Fatal("Error while running the server:", err)
+	jsonData, err := json.Marshal(rents)
+	if err != nil {
+		log.Fatal("Failed to marshal rents data to JSON")
 	}
+
+	// Print the JSON or write it to a file
+	fmt.Println(string(jsonData))
+
+	//router := gin.Default()
+	//router.POST("/login", Login)
+	//router.GET("/status", status)
+	//authorized := router.Group("/")
+	//authorized.Use(authenticate())
+	//{
+	//	authorized.GET("/protected", validate)
+	//}
+	//if err := router.Run(":8080"); err != nil {
+	//	log.Fatal("Error while running the server:", err)
+	//}
 
 }
 
@@ -64,6 +77,26 @@ func createDemoUsersIfEmpty() {
 			DB.Create(&user)
 		}
 	}
+	demoScooter := Scooter{
+		uuid:                "3",
+		Name:                "Scooter 1",
+		Longitude:           0,
+		Latitude:            0,
+		BatteryLevel:        100,
+		MetersUsed:          0,
+		DateCreated:         "2021-02-01",
+		DateLastMaintenance: "2021-11-01",
+		State:               "vacant",
+		Vacant:              true,
+	}
+	DB.Create(&demoScooter)
+	demoRent := Rent{
+		uuid:        "1",
+		ScooterUUID: "3",
+		DateStart:   "2022-01-01",
+		DateStop:    "2023-01-01",
+	}
+	DB.Create(&demoRent)
 }
 
 func startWebServer() {
