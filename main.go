@@ -1,13 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -36,67 +36,30 @@ func main() {
 		}
 		log.Fatal("Error while migrating the database:", err)
 	}
-	createDemoUsersIfEmpty()
 
-	var rents []Rent
-	result := DB.Find(&rents)
-	if result.Error != nil {
-		log.Fatal("Error while fetching the database:", result.Error)
-	}
-	jsonData, err := json.Marshal(rents)
-	if err != nil {
-		log.Fatal("Failed to marshal rents data to JSON")
-	}
+	router := gin.Default()
+	// everything under router is accesible in the root `localhost/`
+	endpointsGroup := router.Group("/endpoints")
+	// everything under endpoindsGroup is accesible in `localhost/endpoints`
+	endpointsGroup.POST("/login", Login)
+	endpointsGroup.GET("/status", status)
+	authorized := endpointsGroup.Group("/")
+	authorized.Use(authenticate())
+	{
+		authorized.GET("/validate", validate)
 
-	// Print the JSON or write it to a file
-	fmt.Println(string(jsonData))
-
-	//router := gin.Default()
-	//router.POST("/login", Login)
-	//router.GET("/status", status)
-	//authorized := router.Group("/")
-	//authorized.Use(authenticate())
-	//{
-	//	authorized.GET("/protected", validate)
-	//}
-	//if err := router.Run(":8080"); err != nil {
-	//	log.Fatal("Error while running the server:", err)
-	//}
-
-}
-
-func createDemoUsersIfEmpty() {
-	var count int64
-	DB.Model(&Credentials{}).Count(&count)
-	if count == 0 {
-		demoUsers := []Credentials{
-			{Username: "alex", Password: "alex1234"},
-			{Username: "tomas", Password: "firebaseSSO"},
-		}
-		for _, user := range demoUsers {
-			DB.Create(&user)
+		// Define the scooterGroup under authorized to ensure it requires authentication
+		scooterGroup := authorized.Group("/scooter")
+		{
+			scooterGroup.GET("/", scooterList)
+			scooterGroup.GET("/:uuid", scooter)
 		}
 	}
-	demoScooter := Scooter{
-		uuid:                "3",
-		Name:                "Scooter 1",
-		Longitude:           0,
-		Latitude:            0,
-		BatteryLevel:        100,
-		MetersUsed:          0,
-		DateCreated:         "2021-02-01",
-		DateLastMaintenance: "2021-11-01",
-		State:               "vacant",
-		Vacant:              true,
+
+	if err := router.Run(":8080"); err != nil {
+		log.Fatal("Error while running the server:", err)
 	}
-	DB.Create(&demoScooter)
-	demoRent := Rent{
-		uuid:        "1",
-		ScooterUUID: "3",
-		DateStart:   "2022-01-01",
-		DateStop:    "2023-01-01",
-	}
-	DB.Create(&demoRent)
+
 }
 
 func startWebServer() {
