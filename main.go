@@ -60,6 +60,7 @@ func main() {
 		{
 			rentGroup.GET("/", rentHistory)
 			rentGroup.POST("/start/:uuid", startRent)
+			rentGroup.POST("/stop/:uuid", stopRent)
 		}
 	}
 

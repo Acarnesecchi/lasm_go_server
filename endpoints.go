@@ -105,7 +105,8 @@ func startRent(c *gin.Context) {
 				"date_start": r.DateStart,
 			},
 			"timestamp": time.Now(),
-			"version":   version})
+			"version":   version,
+		})
 	} else {
 		// scooter not vacant
 		c.JSON(http.StatusMethodNotAllowed, gin.H{
@@ -113,10 +114,61 @@ func startRent(c *gin.Context) {
 			"msg":       "Scooter is not vacant",
 			"rent":      gin.H{},
 			"timestamp": time.Now(),
-			"version":   version})
+			"version":   version,
+		})
 	}
 }
 
 func stopRent(c *gin.Context) {
-	// stop renting a scooter action
+	id := c.Param("uuid")
+	var sc Scooter
+	var r Rent
+
+	result := DB.First(&sc, "uuid = ?", id)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Scooter not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		}
+		return
+	}
+
+	if sc.Vacant {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{
+			"code":      405,
+			"msg":       "Scooter is not rented",
+			"rent":      gin.H{},
+			"timestamp": time.Now(),
+			"version":   version,
+		})
+		return
+	} else {
+		tx := DB.Begin()
+		result = DB.First(&r, "scooter_id = ?", id)
+		if result.Error != nil {
+			if result.Error == gorm.ErrRecordNotFound {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Scooter not found"})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+			}
+			return
+		}
+		r.DateStop = time.Now().String()
+		err := tx.Save(&r)
+		if err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create rent record"})
+			return
+		}
+		sc.Vacant = true
+		err = tx.Save(&sc)
+		if err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create rent record"})
+			return
+		}
+
+		tx.Commit()
+	}
 }
