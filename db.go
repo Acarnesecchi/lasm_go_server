@@ -23,7 +23,7 @@ type Scooter struct {
 
 type Rent struct {
 	Uuid      string  `gorm:"primaryKey" json:"uuid"`
-	ScooterID string  `gorm:"not null" json:"scooter_id"`
+	ScooterID string  `gorm:"not null" json:"-"`
 	Scooter   Scooter `gorm:"foreignKey:ScooterID"`
 	DateStart string  `gorm:"not null" json:"date_start"`
 	DateStop  string  `gorm:"not null" json:"date_stop"`

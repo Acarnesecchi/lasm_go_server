@@ -16,6 +16,8 @@ var (
 	serverStartTime time.Time
 )
 
+const version = "1.0"
+
 type Claims struct {
 	Username string `json:"username"`
 	jwt.StandardClaims
@@ -53,6 +55,11 @@ func main() {
 		{
 			scooterGroup.GET("/", scooterList)
 			scooterGroup.GET("/:uuid", scooter)
+		}
+		rentGroup := authorized.Group("/rent")
+		{
+			rentGroup.GET("/", rentHistory)
+			rentGroup.POST("/start/:uuid", startRent)
 		}
 	}
 
