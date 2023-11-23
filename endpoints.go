@@ -64,10 +64,14 @@ func startRent(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		}
+		return
 	}
 	if sc.Vacant {
+		tx := DB.Begin() // starts a transaction
+
 		random_uuid, err := uuid.NewRandom()
 		if err != nil {
+			tx.Rollback() // probably unnecessary, no DB changed have been made
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong creating the UUID"})
 			return
 		}
@@ -77,13 +81,22 @@ func startRent(c *gin.Context) {
 			Scooter:   sc,
 			DateStart: time.Now().String(),
 		}
-		DB.Create(&r)
-		sc.Vacant = false
-		updateResult := DB.Save(&sc)
-		if updateResult.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating scooter status"})
+		err = tx.Create(&r).Error
+		if err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create rent record"})
 			return
 		}
+		sc.Vacant = false
+		err = tx.Save(&sc).Error
+		if err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update scooter status"})
+			return
+		}
+
+		tx.Commit() // If nothing fails, we commit the transaction
+
 		c.JSON(http.StatusOK, gin.H{
 			"code": 200,
 			"msg":  "OK",
@@ -94,6 +107,7 @@ func startRent(c *gin.Context) {
 			"timestamp": time.Now(),
 			"version":   version})
 	} else {
+		// scooter not vacant
 		c.JSON(http.StatusMethodNotAllowed, gin.H{
 			"code":      405,
 			"msg":       "Scooter is not vacant",
