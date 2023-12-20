@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS credentials (
+CREATE TABLE IF NOT EXISTS scooter_users (
                                            id SERIAL PRIMARY KEY,
                                            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                                            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

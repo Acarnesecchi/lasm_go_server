@@ -2,7 +2,7 @@ package main
 
 import "gorm.io/gorm"
 
-type Credentials struct {
+type ScooterUser struct {
 	gorm.Model
 	Username string `gorm:"primaryKey" json:"username"`
 	Password string `gorm:"not null" json:"password"`

@@ -30,9 +30,9 @@ func main() {
 	serverStartTime = time.Now()
 	DBConnection()
 
-	err := DB.AutoMigrate(&Credentials{}, &Scooter{}, &Rent{})
+	err := DB.AutoMigrate(&ScooterUser{}, &Scooter{}, &Rent{})
 	if err != nil {
-		e := DB.Migrator().DropTable(&Credentials{}, &Scooter{}, &Rent{})
+		e := DB.Migrator().DropTable(&ScooterUser{}, &Scooter{}, &Rent{})
 		if e != nil {
 			log.Fatal("Error while dropping the database:", e)
 		}
@@ -40,17 +40,16 @@ func main() {
 	}
 
 	router := gin.Default()
-	// everything under router is accesible in the root `localhost/`
+
 	endpointsGroup := router.Group("/endpoints")
-	// everything under endpoindsGroup is accesible in `localhost/endpoints`
 	endpointsGroup.POST("/login", Login)
 	endpointsGroup.GET("/status", status)
+
 	authorized := endpointsGroup.Group("/")
 	authorized.Use(authenticate())
 	{
 		authorized.GET("/validate", validate)
 
-		// Define the scooterGroup under authorized to ensure it requires authentication
 		scooterGroup := authorized.Group("/scooter")
 		{
 			scooterGroup.GET("/", scooterList)
@@ -75,7 +74,10 @@ func startWebServer() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	h1 := func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.ParseFiles("index.html"))
-		tmpl.Execute(w, nil)
+		err := tmpl.Execute(w, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	http.HandleFunc("/html", h1)
 	fmt.Println("Starting WebServer on localhost:8000")

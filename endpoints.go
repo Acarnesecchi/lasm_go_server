@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -17,26 +18,28 @@ func rentHistory(c *gin.Context) {
 	var rents []Rent
 	result := DB.Preload("Scooter").Find(&rents)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Scooter not found"})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		}
+	} else {
+		c.JSON(http.StatusOK, gin.H{"rents": rents})
 	}
-	c.JSON(http.StatusOK, gin.H{"rents": rents})
 }
 
 func scooterList(c *gin.Context) {
 	var scooters []Scooter
 	result := DB.Find(&scooters)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Scooter not found"})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		}
+	} else {
+		c.JSON(http.StatusOK, gin.H{"scooters": scooters})
 	}
-	c.JSON(http.StatusOK, gin.H{"scooters": scooters})
 }
 
 func scooter(c *gin.Context) {
@@ -44,13 +47,14 @@ func scooter(c *gin.Context) {
 	var scooter Scooter
 	result := DB.First(&scooter, "uuid = ?", sc)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Scooter not found"})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		}
+	} else {
+		c.JSON(http.StatusOK, scooter)
 	}
-	c.JSON(http.StatusOK, scooter)
 }
 
 func startRent(c *gin.Context) {
@@ -59,7 +63,7 @@ func startRent(c *gin.Context) {
 	var r Rent
 	result := DB.First(&sc, "uuid = ?", id)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Scooter not found"})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
@@ -69,17 +73,17 @@ func startRent(c *gin.Context) {
 	if sc.Vacant {
 		tx := DB.Begin() // starts a transaction
 
-		random_uuid, err := uuid.NewRandom()
+		randomUuid, err := uuid.NewRandom()
 		if err != nil {
 			tx.Rollback() // probably unnecessary, no DB changed have been made
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong creating the UUID"})
 			return
 		}
 		r = Rent{
-			Uuid:      random_uuid.String(),
+			Uuid:      randomUuid.String(),
 			ScooterID: id,
 			Scooter:   sc,
-			DateStart: time.Now().String(),
+			DateStart: time.DateTime,
 		}
 		err = tx.Create(&r).Error
 		if err != nil {
@@ -104,7 +108,7 @@ func startRent(c *gin.Context) {
 				"uuid":       r.Uuid,
 				"date_start": r.DateStart,
 			},
-			"timestamp": time.Now(),
+			"timestamp": time.DateTime,
 			"version":   version,
 		})
 	} else {
@@ -113,7 +117,7 @@ func startRent(c *gin.Context) {
 			"code":      405,
 			"msg":       "Scooter is not vacant",
 			"rent":      gin.H{},
-			"timestamp": time.Now(),
+			"timestamp": time.DateTime,
 			"version":   version,
 		})
 	}
@@ -126,7 +130,7 @@ func stopRent(c *gin.Context) {
 
 	result := DB.First(&sc, "uuid = ?", id)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Scooter not found"})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
@@ -139,36 +143,48 @@ func stopRent(c *gin.Context) {
 			"code":      405,
 			"msg":       "Scooter is not rented",
 			"rent":      gin.H{},
-			"timestamp": time.Now(),
+			"timestamp": time.DateTime,
 			"version":   version,
 		})
 		return
-	} else {
-		tx := DB.Begin()
-		result = DB.First(&r, "scooter_id = ?", id)
-		if result.Error != nil {
-			if result.Error == gorm.ErrRecordNotFound {
-				c.JSON(http.StatusNotFound, gin.H{"error": "Scooter not found"})
-			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-			}
-			return
-		}
-		r.DateStop = time.Now().String()
-		err := tx.Save(&r)
-		if err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create rent record"})
-			return
-		}
-		sc.Vacant = true
-		err = tx.Save(&sc)
-		if err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create rent record"})
-			return
-		}
-
-		tx.Commit()
 	}
+
+	tx := DB.Begin()
+
+	result = tx.First(&r, "scooter_id = ?", id)
+	if result.Error != nil {
+		tx.Rollback()
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Rent record not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		}
+		return
+	}
+
+	r.DateStop = time.Now().Format(time.RFC3339)
+	if result = tx.Save(&r); result.Error != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update rent record"})
+		return
+	}
+
+	sc.Vacant = true
+	if result = tx.Save(&sc); result.Error != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update scooter record"})
+		return
+	}
+
+	tx.Commit()
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "OK",
+		"rent": gin.H{
+			"uuid":       r.Uuid,
+			"date_start": r.DateStart,
+		},
+		"timestamp": time.DateTime,
+		"version":   version,
+	})
 }

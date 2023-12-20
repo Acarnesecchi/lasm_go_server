@@ -9,13 +9,13 @@ import (
 )
 
 func Login(c *gin.Context) {
-	var credentials Credentials
+	var credentials ScooterUser
 	if err := c.ShouldBindJSON(&credentials); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	var storedCredentials Credentials
+	var storedCredentials ScooterUser
 	result := DB.Where("username = ?", credentials.Username).First(&storedCredentials)
 	if result.Error != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "credentials incorrect"})
