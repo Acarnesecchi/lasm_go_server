@@ -24,7 +24,6 @@ type Claims struct {
 }
 
 func main() {
-
 	go startWebServer()
 
 	serverStartTime = time.Now()

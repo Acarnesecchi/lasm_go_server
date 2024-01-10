@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"time"
 
@@ -39,6 +40,16 @@ func scooterList(c *gin.Context) {
 		}
 	} else {
 		c.JSON(http.StatusOK, gin.H{"scooters": scooters})
+	}
+	l := Log{
+		Endpoint:  c.FullPath(),
+		Ip:        c.ClientIP(),
+		Timestamp: time.Now().Format(time.RFC3339),
+		Client:    c.Request.UserAgent(),
+	}
+	err := SendLog(l)
+	if err != nil {
+		log.Fatal("Error while sending log:", err)
 	}
 }
 
@@ -121,6 +132,16 @@ func startRent(c *gin.Context) {
 			"version":   version,
 		})
 	}
+	l := Log{
+		Endpoint:  c.FullPath(),
+		Ip:        c.ClientIP(),
+		Timestamp: time.Now().Format(time.RFC3339),
+		Client:    c.Request.UserAgent(),
+	}
+	err := SendLog(l)
+	if err != nil {
+		log.Fatal("Error while sending log:", err)
+	}
 }
 
 func stopRent(c *gin.Context) {
@@ -187,4 +208,14 @@ func stopRent(c *gin.Context) {
 		"timestamp": time.DateTime,
 		"version":   version,
 	})
+	l := Log{
+		Endpoint:  c.FullPath(),
+		Ip:        c.ClientIP(),
+		Timestamp: time.Now().Format(time.RFC3339),
+		Client:    c.Request.UserAgent(),
+	}
+	err := SendLog(l)
+	if err != nil {
+		log.Fatal("Error while sending log:", err)
+	}
 }
