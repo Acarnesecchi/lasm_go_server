@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	firebase "firebase.google.com/go/v4"
 	"fmt"
-	"google.golang.org/api/option"
 	"log"
+
+	firebase "firebase.google.com/go/v4"
+	"google.golang.org/api/option"
 )
 
 var app *firebase.App = nil
@@ -28,6 +29,7 @@ type Log struct {
 	Ip        string `json:"ip"`
 	Timestamp string `json:"timestamp"`
 	Client    string `json:"client"`
+	Status    string `json:"status"`
 }
 
 func SendLog(l ...Log) error {
@@ -58,6 +60,7 @@ func SendLog(l ...Log) error {
 				Ip:        "127.0.0.1",
 				Timestamp: "2021-05-01 00:00:00",
 				Client:    "default",
+				Status:    "success",
 			})
 	}
 	for i := range l {
