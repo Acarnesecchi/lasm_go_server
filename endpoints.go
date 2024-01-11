@@ -31,7 +31,6 @@ func rentHistory(c *gin.Context) {
 
 func scooterList(c *gin.Context) {
 	var scooters []Scooter
-	status := "success"
 	result := DB.Find(&scooters)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -39,15 +38,12 @@ func scooterList(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		}
-		status = "failed"
+		buildLog(c, "failure")
+		return
 	} else {
 		c.JSON(http.StatusOK, gin.H{"scooters": scooters})
 	}
-	l := buildLog(c, status)
-	err := SendLog(l)
-	if err != nil {
-		log.Fatal("Error while sending log:", err)
-	}
+	buildLog(c, "success")
 }
 
 func scooter(c *gin.Context) {
@@ -60,16 +56,15 @@ func scooter(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		}
-	} else {
-		c.JSON(http.StatusOK, scooter)
+		return
 	}
+	c.JSON(http.StatusOK, scooter)
 }
 
 func startRent(c *gin.Context) {
 	id := c.Param("uuid")
 	var sc Scooter
 	var r Rent
-	status := "success"
 	result := DB.First(&sc, "uuid = ?", id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -77,7 +72,8 @@ func startRent(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		}
-		status = "failed"
+		buildLog(c, "failure")
+		return
 	}
 	if sc.Vacant {
 		tx := DB.Begin() // starts a transaction
@@ -86,7 +82,8 @@ func startRent(c *gin.Context) {
 		if err != nil {
 			tx.Rollback() // probably unnecessary, no DB changed have been made
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong creating the UUID"})
-			status = "failed"
+			buildLog(c, "failure")
+			return
 		}
 		r = Rent{
 			Uuid:      randomUuid.String(),
@@ -98,14 +95,16 @@ func startRent(c *gin.Context) {
 		if err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create rent record"})
-			status = "failed"
+			buildLog(c, "failure")
+			return
 		}
 		sc.Vacant = false
 		err = tx.Save(&sc).Error
 		if err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update scooter status"})
-			status = "failed"
+			buildLog(c, "failure")
+			return
 		}
 
 		tx.Commit() // If nothing fails, we commit the transaction
@@ -129,20 +128,14 @@ func startRent(c *gin.Context) {
 			"timestamp": time.DateTime,
 			"version":   version,
 		})
-		status = "failure"
 	}
-	l := buildLog(c, status)
-	err := SendLog(l)
-	if err != nil {
-		log.Fatal("Error while sending log:", err)
-	}
+	buildLog(c, "success")
 }
 
 func stopRent(c *gin.Context) {
 	id := c.Param("uuid")
 	var sc Scooter
 	var r Rent
-	status := "success"
 	result := DB.First(&sc, "uuid = ?", id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -150,7 +143,8 @@ func stopRent(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		}
-		status = "failed"
+		buildLog(c, "failure")
+		return
 	}
 
 	if sc.Vacant {
@@ -161,7 +155,8 @@ func stopRent(c *gin.Context) {
 			"timestamp": time.DateTime,
 			"version":   version,
 		})
-		status = "failed"
+		buildLog(c, "failure")
+		return
 	} else {
 		tx := DB.Begin()
 
@@ -173,21 +168,24 @@ func stopRent(c *gin.Context) {
 			} else {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 			}
-			status = "failed"
+			buildLog(c, "failure")
+			return
 		}
 
 		r.DateStop = time.Now().Format(time.RFC3339)
 		if result = tx.Save(&r); result.Error != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update rent record"})
-			status = "failed"
+			buildLog(c, "failure")
+			return
 		}
 
 		sc.Vacant = true
 		if result = tx.Save(&sc); result.Error != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update scooter record"})
-			status = "failed"
+			buildLog(c, "failure")
+			return
 		}
 
 		tx.Commit()
@@ -202,15 +200,10 @@ func stopRent(c *gin.Context) {
 			"version":   version,
 		})
 	}
-
-	l := buildLog(c, status)
-	err := SendLog(l)
-	if err != nil {
-		log.Fatal("Error while sending log:", err)
-	}
+	buildLog(c, "success")
 }
 
-func buildLog(c *gin.Context, s string) Log {
+func buildLog(c *gin.Context, s string) {
 	l := Log{
 		Endpoint:  c.Request.URL.Path,
 		Ip:        c.ClientIP(),
@@ -218,5 +211,8 @@ func buildLog(c *gin.Context, s string) Log {
 		Client:    c.Request.UserAgent(),
 		Status:    s,
 	}
-	return l
+	err := SendLog(l)
+	if err != nil {
+		log.Default().Println("could not send log to server")
+	}
 }
