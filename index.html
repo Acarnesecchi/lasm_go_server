@@ -1,12 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <!-- ... other head elements ... -->
-    <link rel="stylesheet" type="text/css" href="/static/css/style.css">
+
 </head>
 <body>
-    <h1>Hello World!</h1>
-    <button id="clickMeButton">Click Me!</button>
-    <script src="/static/js/script.js"></script>
+<button onclick="loginGoogle()">Login</button>
+<a id="user_name"></a>
+
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+
+<script>
+    const firebaseApp = {
+        apiKey: "AIzaSyCybtGa3ewvhu09JIzBCyodpbHJ-9infsI",
+        authDomain: "lasm-go.firebaseapp.com",
+        databaseURL: "https://lasm-go-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "lasm-go",
+        storageBucket: "lasm-go.appspot.com",
+        messagingSenderId: "69394339404",
+        appId: "1:69394339404:web:40c6f58a252782a911c6e9",
+        measurementId: "G-FJLD4TB9J8"
+    };
+    const db = firebaseApp.firestore();
+    const auth = firebaseApp.auth();
+
+    function loginGoogle(){
+        var provider = new firebase.auth.GoogleAuthProvider();
+        firebase.auth()
+            .signInWithPopUp(provider)
+            .then((result) => {
+                /** @type {firebase.auth.OAuthCredential} */
+                var credential = result.credential;
+
+                // This gives you a Google Access Token. You can use it to access the Google API.
+                var token = credential.accessToken;
+                // The signed-in user info.
+                console.log("*************")
+                console.log(token)
+                var user = result.user;
+                console.log(user)
+
+
+            }).catch((error) => {
+            // Handle Errors here.
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            // The email of the user's account used.
+            var email = error.email;
+            // The firebase.auth.AuthCredential type that was used.
+            var credential = error.credential;
+            // ...
+            console.log(errorCode)
+            console.log(errorMessage)
+        })
+    }
+</script>
 </body>
+
+<meta charset="UTF-8">
+<title>Authentication</title>
 </html>
