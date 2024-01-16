@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -215,4 +216,32 @@ func buildLog(c *gin.Context, s string) {
 	if err != nil {
 		log.Default().Println("could not send log to server")
 	}
+}
+
+func handleSendNotification(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var Notification struct {
+		Token   string `json:"token"`
+		Title   string `json:"title"`
+		Message string `json:"message"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&Notification)
+	if err != nil {
+		http.Error(w, "error decoding form", http.StatusBadRequest)
+		return
+	}
+
+	err = SendFCM(Notification.Token, Notification.Title, Notification.Message)
+	if err != nil {
+		http.Error(w, "error sending message", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Message sent"))
 }

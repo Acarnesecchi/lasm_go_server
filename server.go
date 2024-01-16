@@ -11,16 +11,24 @@ import (
 )
 
 func startWebServer() {
-	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	h1 := func(w http.ResponseWriter, r *http.Request) {
-		tmpl := template.Must(template.ParseFiles("index.html"))
+		tmpl := template.Must(template.ParseFiles("send.html"))
 		err := tmpl.Execute(w, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-	http.HandleFunc("/html", h1)
+	h2 := func(w http.ResponseWriter, r *http.Request) {
+		tmpl := template.Must(template.ParseFiles("receive.html"))
+		err := tmpl.Execute(w, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	http.Handle("/firebase-messaging-sw.js", http.FileServer(http.Dir(".")))
+	http.HandleFunc("/send-message", handleSendNotification)
+	http.HandleFunc("/send", h1)
+	http.HandleFunc("/receive", h2)
 	fmt.Println("Starting WebServer on localhost:8000")
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }

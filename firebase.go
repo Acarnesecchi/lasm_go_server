@@ -6,6 +6,7 @@ import (
 	"log"
 
 	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/messaging"
 	"google.golang.org/api/option"
 )
 
@@ -70,5 +71,37 @@ func SendLog(l ...Log) error {
 		log.Fatalln("Error setting value:", err)
 		return err
 	}
+	return nil
+}
+
+func SendFCM(token string, title string, body string) error {
+	ctx := context.Background()
+	if app == nil {
+		var err error
+		app, err = Init(ctx)
+		if err != nil {
+			return err
+		}
+	}
+	client, err := app.Messaging(ctx)
+	if err != nil {
+		log.Fatalf("error getting Messaging client: %v\n", err)
+		return err
+	}
+
+	message := &messaging.Message{
+		Data: map[string]string{
+			"title": title,
+			"body":  body,
+		},
+		Token: token,
+	}
+
+	response, err := client.Send(ctx, message)
+	if err != nil {
+		log.Fatalf("error sending message: %v - %s\n", err, response)
+		return err
+	}
+
 	return nil
 }

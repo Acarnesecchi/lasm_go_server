@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
+</head>
+<body>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCybtGa3ewvhu09JIzBCyodpbHJ-9infsI",
+        authDomain: "lasm-go.firebaseapp.com",
+        databaseURL: "https://lasm-go-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "lasm-go",
+        storageBucket: "lasm-go.appspot.com",
+        messagingSenderId: "69394339404",
+        appId: "1:69394339404:web:40c6f58a252782a911c6e9",
+        measurementId: "G-FJLD4TB9J8"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging()
+
+    function requestPermissionAndGetToken() {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    console.log("Notification permission granted.");
+                    // Get the token
+                    messaging.getToken({vapidKey: "BNp9uoxuD9eO0BgXIQCp1Yzsx3qutR7q3iuGo8VJfWs-zJLsF8avGBZk9M287ZfO_SIKfyZNrYF91yH3MGM-2AM"}).then((currentToken) => {
+                        if (currentToken) {
+                            console.log("Token:", currentToken);
+                        }
+                    }).catch((err) => {
+                        console.log("An error occurred while retrieving token. ", err);
+                    });
+                } else {
+                console.log("Unable to get permission to notify.", permission);
+                }
+                }).catch((err) => {
+                console.error("Error in getting notification permission", err);
+                });
+                }
+    requestPermissionAndGetToken();
+
+    messaging.onMessage(function(payload){
+        document.getElementById('messages').innerHTML += '<p>' + payload.notification.body + '</p>';
+    });
+
+</script>
+    <h1>Messages:</h1>
+    <div id="messages"></div>
+</body>
+
+<meta charset="UTF-8">
+<title>Authentication</title>
+</html>
