@@ -121,7 +121,6 @@ func startRent(c *gin.Context) {
 			"version":   version,
 		})
 	} else {
-		// scooter not vacant
 		c.JSON(http.StatusMethodNotAllowed, gin.H{
 			"code":      405,
 			"msg":       "Scooter is not vacant",
@@ -129,6 +128,8 @@ func startRent(c *gin.Context) {
 			"timestamp": time.DateTime,
 			"version":   version,
 		})
+		buildLog(c, "failure")
+		return
 	}
 	buildLog(c, "success")
 }
