@@ -37,7 +37,7 @@
         Notification.requestPermission().then(permission => {
             if (permission === "granted") {
                 console.log("Notification permission granted.");
-                messaging.getToken({vapidKey: "Your VAPID Key"}).then((currentToken) => {
+                messaging.getToken({vapidKey: "BNp9uoxuD9eO0BgXIQCp1Yzsx3qutR7q3iuGo8VJfWs-zJLsF8avGBZk9M287ZfO_SIKfyZNrYF91yH3MGM-2AM"}).then((currentToken) => {
                     if (currentToken) {
                         console.log("Token:", currentToken);
                         document.getElementById('token').value = currentToken;
@@ -56,6 +56,27 @@
     }
 
     requestPermissionAndGetToken();
+
+    document.getElementById('notification-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var formData = {
+            token: document.getElementById('token').value,
+            title: document.getElementById('title').value,
+            message: document.getElementById('message').value
+        };
+        fetch('/send-message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        }).then(() => {
+            document.getElementById('title').value = '';
+            document.getElementById('message').value = '';
+        }).catch(error => {
+            console.error('Error:', error);
+        });
+    });
 </script>
 
 </html>

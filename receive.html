@@ -42,7 +42,8 @@
     requestPermissionAndGetToken();
 
     messaging.onMessage(function(payload){
-        document.getElementById('messages').innerHTML += '<p>' + payload.notification.body + '</p>';
+        console.log(payload)
+        document.getElementById('messages').innerHTML += '<p>' + '<h3>' + payload.data.title + '</h3>' + payload.data.body + '</p>';
     });
 
 </script>
