@@ -2,47 +2,24 @@
 <html>
 <head>
     <title>Send Push message</title>
-    <script src="https://unpkg.com/htmx.org"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
 </head>
 
 <body>
     <h1>Send Push message</h1>
-    <form id="notification-form" hx-post="/send-message" hx-encoding="application/json">
-        <label for="token">Token del Dispositivo:</label><br>
+    <form id="notification-form" action="/send-message" method="post">
+        <label for="token">Token:</label><br>
         <input type="text" id="token" name="token" readonly><br><br>
-        <label for="title">Título:</label><br>
+        <label for="title">Title:</label><br>
         <input type="text" id="title" name="title" required><br><br>
-        <label for="message">Mensaje:</label><br>
+        <label for="message">Message:</label><br>
         <textarea id="message" name="message" required></textarea><br><br>
         <input type="submit" value="Send Message">
     </form>
-    <script>
-        document.getElementById('notification-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            var formData = {
-                token: document.getElementById('token').value,
-                title: document.getElementById('title').value,
-                message: document.getElementById('message').value
-            };
-            fetch('/send-message', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            }).then(response => response.json()).then(data => {
-                console.log(data);
-                // Handle response here
-            }).catch(error => {
-                console.error('Error:', error);
-            });
-        });
-        </script>
 </body>
+
 <script>
-    var clientToken
     const firebaseConfig = {
         apiKey: "AIzaSyCybtGa3ewvhu09JIzBCyodpbHJ-9infsI",
         authDomain: "lasm-go.firebaseapp.com",
@@ -54,29 +31,32 @@
         measurementId: "G-FJLD4TB9J8"
     };
     firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging()
+    const messaging = firebase.messaging();
+
     function requestPermissionAndGetToken() {
-            Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                    console.log("Notification permission granted.");
-                    // Get the token
-                    messaging.getToken({vapidKey: "BNp9uoxuD9eO0BgXIQCp1Yzsx3qutR7q3iuGo8VJfWs-zJLsF8avGBZk9M287ZfO_SIKfyZNrYF91yH3MGM-2AM"}).then((currentToken) => {
-                        if (currentToken) {
-                            console.log("Token:", currentToken);
-                            document.getElementById('token').value = currentToken;
-                        } else {
-                            console.log("No Instance ID token available. Request permission to generate one.");
-                        }
-                    }).catch((err) => {
-                        console.log("An error occurred while retrieving token. ", err);
-                    });
-                } else {
-                console.log("Unable to get permission to notify.", permission);
-                }
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                console.log("Notification permission granted.");
+                messaging.getToken({vapidKey: "Your VAPID Key"}).then((currentToken) => {
+                    if (currentToken) {
+                        console.log("Token:", currentToken);
+                        document.getElementById('token').value = currentToken;
+                    } else {
+                        console.log("No Instance ID token available. Request permission to generate one.");
+                    }
                 }).catch((err) => {
-                console.error("Error in getting notification permission", err);
+                    console.log("An error occurred while retrieving token. ", err);
                 });
-                }
+            } else {
+                console.log("Unable to get permission to notify.", permission);
+            }
+        }).catch((err) => {
+            console.error("Error in getting notification permission", err);
+        });
+    }
+
     requestPermissionAndGetToken();
 </script>
+
 </html>
+
