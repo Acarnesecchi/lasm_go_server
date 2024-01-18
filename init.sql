@@ -6,3 +6,5 @@ CREATE TABLE IF NOT EXISTS scooter_users (
                                            username VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL
     );
+INSERT INTO scooter_users(username, password) VALUES (alex, alex1234);
+INSERT INTO scooter_users(username, password) VALUES (jamon, serrano);
