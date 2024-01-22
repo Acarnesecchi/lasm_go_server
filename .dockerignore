@@ -1,4 +1,4 @@
-*.html
+*.sql
 README.md
 credentials/
 static/
