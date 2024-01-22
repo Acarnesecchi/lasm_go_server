@@ -20,4 +20,6 @@ COPY --from=builder /app/api-server .
 
 COPY index.html .
 
+ENV GIN_MODE=release
+
 ENTRYPOINT ["./api-server"]
