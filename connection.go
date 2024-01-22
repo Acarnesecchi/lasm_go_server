@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
-
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"log"
 )
 
 var DB *gorm.DB
@@ -14,7 +13,7 @@ var DB *gorm.DB
 func DBConnection() {
 	viper.SetConfigName("postgres")
 	viper.SetConfigType("ini")
-	viper.AddConfigPath("credentials") // or the path to your config file
+	viper.AddConfigPath(".") // or the path to your config file
 	err := viper.ReadInConfig()
 	if err != nil {
 		log.Fatal("Error reading config file:", err)
