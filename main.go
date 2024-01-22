@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -19,6 +21,19 @@ type Claims struct {
 }
 
 func main() {
-	go startWebServer()
-	startAPIServer()
+	app, ok := os.LookupEnv("APP")
+	if !ok {
+		log.Fatalf("error undefined app")
+	}
+
+	switch app {
+	case "api-server-logger":
+		startAPIServer()
+	case "send-server":
+		startSendServer()
+	case "receive-server":
+		startReceiveServer()
+	default:
+		log.Fatalf("error unknown app")
+	}
 }

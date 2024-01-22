@@ -1,15 +1,30 @@
 ## How to run
 
 1. Clone the repository
-1. Make sure to have Go
-1. Install the dependencies running `go mod tidy`
-1. Run the application with `go run .`
-> It will execute a RESTful API on port 8080 and a web service on port 8000.
+1. Build or pull the container image
+1. Run a container with the image and define a volume and its port
+
+```shell
+docker run -n api-server-logger -v crentials:app/credentials -p 8080:8080 api-server-logger
+```
+
+or
+
+```shell
+docker run -n send-server -v crentials:app/credentials -p 8000:8000 send-server
+```
+
+or
+
+```shell
+docker run -n receive-server -v crentials:app/credentials -p 8001:8001 receive-server
+```
 
 ## Configuration
 This project requires two configuration files to run:
 
-**postgres.ini:** This file contains the configuration for the PostgreSQL database connection. It should be located in the root directory of the project and have the following structure:
+**postgres.ini:** This file contains the configuration for the PostgreSQL database connection. It should be located in the credentials directory of the project and have the following structure:
+
 ```ini
 [postgresql]
 host = localhost
@@ -18,6 +33,7 @@ user = yourusername
 password = yourpassword
 database = yourdatabase
 ```
+
 **serviceAccountKey.json:** This file contains the Firebase service account key, which is used to authenticate the server with Firebase. It should be located in the credentials directory of the project.
 
 
