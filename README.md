@@ -1,9 +1,8 @@
 ## How to run
 
 1. Clone the repository
-1. Make sure to have Go
-1. Install the dependencies running `go mod tidy`
-1. Run the application with `go run .`
+1. Build or pull the container image
+1. Run a container with the image and define a volume `docker run -n api-server -v crentials:app/credentials api-server` or `docker run -n login-server -v crentials:app/credentials login-server`
 > It will execute a RESTful API on port 8080 and a web service on port 8000.
 
 ## Configuration

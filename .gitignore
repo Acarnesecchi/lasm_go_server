@@ -1,1 +1,3 @@
 .idea
+credentials/serviceAccountKey.json
+credentials/postgres.ini
