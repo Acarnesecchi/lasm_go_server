@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func startSendServer() {
+func startMessagingServer() {
 	h1 := func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.ParseFiles("send.html"))
 		err := tmpl.Execute(w, nil)
@@ -18,15 +18,6 @@ func startSendServer() {
 			log.Fatal(err)
 		}
 	}
-
-	http.Handle("/firebase-messaging-sw.js", http.FileServer(http.Dir(".")))
-	http.HandleFunc("/send-message", handleSendNotification)
-	http.HandleFunc("/send", h1)
-	fmt.Println("Starting WebServer on localhost:8000")
-	log.Fatal(http.ListenAndServe(":8000", nil))
-}
-
-func startReceiveServer() {
 	h2 := func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.ParseFiles("receive.html"))
 		err := tmpl.Execute(w, nil)
@@ -35,9 +26,11 @@ func startReceiveServer() {
 		}
 	}
 	http.Handle("/firebase-messaging-sw.js", http.FileServer(http.Dir(".")))
+	http.HandleFunc("/send-message", handleSendNotification)
+	http.HandleFunc("/send", h1)
 	http.HandleFunc("/receive", h2)
-	fmt.Println("Starting WebServer on localhost:8001")
-	log.Fatal(http.ListenAndServe(":8001", nil))
+	fmt.Println("Starting WebServer on localhost:8002")
+	log.Fatal(http.ListenAndServe(":8002", nil))
 }
 
 func startAPIServer() {

@@ -18,7 +18,7 @@ ENV APP=send-server
 
 COPY --from=builder /app/send-server .
 
-COPY send.html .
+COPY *.html .
 
 COPY firebase-messaging-sw.js .
 

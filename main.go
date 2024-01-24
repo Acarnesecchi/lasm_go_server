@@ -29,10 +29,8 @@ func main() {
 	switch app {
 	case "api-server-logger":
 		startAPIServer()
-	case "send-server":
-		startSendServer()
-	case "receive-server":
-		startReceiveServer()
+	case "messaging-server":
+		startMessagingServer()
 	default:
 		log.Fatalf("error unknown app")
 	}
