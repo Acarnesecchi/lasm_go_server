@@ -1,2 +1,0 @@
-docker run --name api-server -v .\credentials\:/app/credentials -p 8080:8080 --network f8a59 -d --rm apiserver
-docker run --name api-login -v .\credentials\:/app/credentials -p 8000:8000 -d --rm apilogin
