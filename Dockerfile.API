@@ -18,4 +18,6 @@ ENV APP=api-server-logger
 
 COPY --from=builder /app/api-server-logger .
 
+ENV GIN_MODE=release
+
 ENTRYPOINT ["./api-server-logger"]
